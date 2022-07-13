@@ -1,23 +1,27 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
     import type { ChessPiece } from "../models/pieces/chess-piece.model";
+import type { Position } from '../models/position.model';
     import Piece from "./Piece.svelte";
 
     const dispatch = createEventDispatcher();
     
     export let chessboardPieces: ChessPiece[];
     export let selectedPiece: ChessPiece;
+    export let availableMoves: Position[];
 
-    $: console.log(chessboardPieces);
+    $: console.log(availableMoves);
 
-    const columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-    const rows = ['8', '7', '6', '5', '4', '3', '2', '1'];
+    const columns = [1, 2, 3, 4, 5, 6, 7, 8];
+    const rows = columns.slice().reverse();
 </script>
 
-<style>
+<style lang="scss">
     .column {
-        width: 5rem;
-        height: 5rem;
+        width: $sizeSquare;
+        height: $sizeSquare;
+        padding: 0px;
+        margin: 0px;
     }
 
     .row:nth-child(odd) .column:nth-child(even) {
@@ -37,14 +41,21 @@
         top: 0;
         left: 0;
     }
+
+    .is-available {
+        background: yellow !important;
+    }
 </style>
 
-<div class="chessboard">
-    {#each rows as row}
+<div class="chessboard container">
+    {#each rows as row (row)}
         <div class="row d-flex">
-            {#each columns as column}
-                <div class="column">
-                    {column + row}
+            {#each columns as column (column)}
+                <div
+                    class="column"
+                    class:is-available={!!availableMoves?.find((moves) => moves === +(column.toString() + row.toString()))}
+                >
+                    {column}{row}
                 </div>
             {/each}
         </div>

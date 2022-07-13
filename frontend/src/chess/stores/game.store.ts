@@ -19,6 +19,9 @@ const customGameStore = {
     setSelectedPiece: (piece: ChessPiece) => {
         gameStore.update((game) => {
             game.selectedPiece = piece;
+            console.log(piece.type);
+            console.log('getAvailablePositions', piece.getAvailablePositions(game.board));
+            game.availableMoves = piece.getAvailablePositions(game.board);
             return { ...game };
         })
     }

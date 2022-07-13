@@ -3,7 +3,6 @@ import { onDestroy } from "svelte";
 
     import Chessboard from "../components/Chessboard.svelte";
     import type { GameStore } from "../models/game-store.model";
-    import type { Game } from "../models/game.model";
     import type { ChessPiece } from "../models/pieces/chess-piece.model";
     import { getDefaultGame } from "../services/chessboard.service";
     import gameStore from "../stores/game.store";
@@ -13,6 +12,7 @@ import { onDestroy } from "svelte";
 
     const unsubscribe = gameStore.subscribe((game) => {
         currentGame = game;
+        console.log(currentGame);
     });
 
     onDestroy(() => {
@@ -29,5 +29,6 @@ import { onDestroy } from "svelte";
 <Chessboard
     chessboardPieces="{currentGame.board}"
     selectedPiece="{currentGame.selectedPiece}"
+    availableMoves="{currentGame.availableMoves}"
     on:pieceClick="{handlePieceClick}"
 ></Chessboard>

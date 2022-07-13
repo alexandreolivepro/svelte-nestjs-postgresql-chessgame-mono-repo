@@ -7,10 +7,12 @@
 
 <style lang="scss">
     $rows: '8', '7', '6', '5', '4', '3', '2', '1';
-    $columns: 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h';
+    $columns: '1', '2', '3', '4', '5', '6', '7', '8';
 
     div {
         position: absolute;
+        width: $sizeSquare;
+        height: $sizeSquare;
     }
 
     .is-selected {
@@ -20,7 +22,7 @@
     @for $i from 1 through length($rows) {
         @for $j from 1 through length($columns) {
             .square-#{nth($columns, $j)}#{nth($rows, $i)} {
-                transform: translate(($j * 5rem) - 5rem, ($i * 5rem) - 5rem);
+                transform: translate(($j * $sizeSquare) - $sizeSquare, ($i * $sizeSquare) - $sizeSquare);
             }
         }
     }
