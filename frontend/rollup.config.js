@@ -44,7 +44,10 @@ export default {
 			preprocess: sveltePreprocess({
 				sourceMap: !production,
 				scss: {
-					prependData: `@import './src/app.scss';`
+					prependData: `
+						@use "sass:map";
+						@import './src/app.scss';
+					` 
 				}
 			}),
 			compilerOptions: {

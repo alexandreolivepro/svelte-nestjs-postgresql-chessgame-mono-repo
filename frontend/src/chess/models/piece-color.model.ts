@@ -1,1 +1,4 @@
-export type PieceColor = 'white' | 'black';
+export enum PieceColor {
+    WHITE = 'white',
+    BLACK = 'black'
+};

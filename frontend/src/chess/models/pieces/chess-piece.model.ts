@@ -1,5 +1,7 @@
 import type { PieceColor } from "../../enums/piece-color.enum";
 import type { PieceType } from "../../enums/piece-type.enum";
+import type { GameStore } from "../game-store.model";
+import type { Move } from "../move.model";
 import type { Position } from "../position.model";
 import type { Bishop } from "./bishop.model";
 import type { King } from "./king.model";
@@ -20,7 +22,11 @@ export abstract class ChessPieceAbstract {
         this._position = position;
     }
 
-    abstract getAvailablePositions(pieces: ChessPiece[]): Position[];
+    abstract getAvailablePositions(pieces: ChessPiece[], moves: Move[], isMovedPiece: boolean): Position[];
+
+    onMoveAction(gameStore: GameStore): GameStore {
+        return gameStore;
+    }
 
     set position(position: Position) {
         this._position = position;

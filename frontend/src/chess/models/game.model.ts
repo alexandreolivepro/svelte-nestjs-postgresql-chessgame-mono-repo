@@ -1,4 +1,4 @@
-import { defaultChessboardWithPieces } from "../services/chessboard.service";
+import type { Move } from "./move.model";
 import type { ChessPiece } from "./pieces/chess-piece.model";
 
 export interface Game {
@@ -6,7 +6,7 @@ export interface Game {
 
     updatedAt: Date;
 
-    moves: string[];
+    moves: Move[];
 
     board: ChessPiece[];
 

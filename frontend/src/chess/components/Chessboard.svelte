@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
     import type { ChessPiece } from "../models/pieces/chess-piece.model";
-import type { Position } from '../models/position.model';
+    import type { Position } from '../models/position.model';
     import Piece from "./Piece.svelte";
 
     const dispatch = createEventDispatcher();
@@ -10,10 +10,14 @@ import type { Position } from '../models/position.model';
     export let selectedPiece: ChessPiece;
     export let availableMoves: Position[];
 
-    $: console.log(availableMoves);
-
     const columns = [1, 2, 3, 4, 5, 6, 7, 8];
     const rows = columns.slice().reverse();
+
+    function clickEmptySquare(event): void {
+        if (selectedPiece) {
+            dispatch('movePiece', { square: event.target.dataset.square });
+        }
+    }
 </script>
 
 <style lang="scss">
@@ -40,7 +44,7 @@ import type { Position } from '../models/position.model';
         position: absolute;
         top: 0;
         left: 0;
-    }
+    }   
 
     .is-available {
         background: yellow !important;
@@ -54,6 +58,8 @@ import type { Position } from '../models/position.model';
                 <div
                     class="column"
                     class:is-available={!!availableMoves?.find((moves) => moves === +(column.toString() + row.toString()))}
+                    data-square="{column.toString() + row.toString()}"
+                    on:click="{clickEmptySquare}"
                 >
                     {column}{row}
                 </div>

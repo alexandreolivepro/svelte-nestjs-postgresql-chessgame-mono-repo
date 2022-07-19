@@ -4,25 +4,33 @@ import { onDestroy } from "svelte";
     import Chessboard from "../components/Chessboard.svelte";
     import type { GameStore } from "../models/game-store.model";
     import type { ChessPiece } from "../models/pieces/chess-piece.model";
-    import { getDefaultGame } from "../services/chessboard.service";
+    import { defaultGame } from "../config";
     import gameStore from "../stores/game.store";
+    import { getOppositeColor } from "../utils/chessboard.utils";
 
     let currentGame: GameStore;
-    gameStore.setGame(getDefaultGame());
+    gameStore.setGame(defaultGame);
 
     const unsubscribe = gameStore.subscribe((game) => {
         currentGame = game;
-        console.log(currentGame);
     });
 
     onDestroy(() => {
         unsubscribe();
     });
 
-    function handlePieceClick(event: CustomEvent<ChessPiece>) {
+    function handlePieceClick(event: CustomEvent<ChessPiece>): void {
         const { detail: piece } = event;
 
-        gameStore.setSelectedPiece(piece);
+        if (piece.color === currentGame.nextColorToPlay) {
+            gameStore.setSelectedPiece(piece);
+        } else if (piece.color === getOppositeColor(currentGame.selectedPiece?.color)) {
+            gameStore.addMove(piece.position.toString());
+        }
+    }
+
+    function handleMovePiece(event: CustomEvent<{square: string}>): void {
+        gameStore.addMove(event.detail.square);
     }
 </script>
 
@@ -31,4 +39,5 @@ import { onDestroy } from "svelte";
     selectedPiece="{currentGame.selectedPiece}"
     availableMoves="{currentGame.availableMoves}"
     on:pieceClick="{handlePieceClick}"
+    on:movePiece="{handleMovePiece}"
 ></Chessboard>
