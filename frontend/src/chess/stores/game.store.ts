@@ -14,7 +14,7 @@ const customGameStore = {
     },
     addMove: (move: string) => {
         gameStore.update((game) => {
-            if (game.availableMoves.find((availableMove) => availableMove === +move)) {
+            if (game.availableMoves?.find((availableMove) => availableMove === +move)) {
                 game.moves.push({
                     piece: game.selectedPiece,
                     start: game.selectedPiece.position,
@@ -28,6 +28,10 @@ const customGameStore = {
                 game.board[game.board.findIndex((piece) => piece.position === game.selectedPiece.position)].position = +move as Position;
                 // Allow the pieces to make action on the board (castling moving the rook or en passant for exemple)
                 game = game.selectedPiece.onMoveAction(game);
+                game.board = game.board.map((value) => {
+                    value.availableMoves = value.getAvailablePositions(game.board, [], false);
+                    return value;
+                });
                 // Reset the selectedPiece
                 game.selectedPiece = null;
                 game.availableMoves = [];
@@ -39,8 +43,8 @@ const customGameStore = {
     },
     setSelectedPiece: (piece: ChessPiece) => {
         gameStore.update((game) => {
-            game.availableMoves = game.selectedPiece ? [] : piece.getAvailablePositions(game.board, game.moves, true);
-            game.selectedPiece = game.selectedPiece ? null : piece;
+            game.availableMoves = game.selectedPiece?.position === piece.position ? [] : piece.getAvailablePositions(game.board, game.moves, true);
+            game.selectedPiece = game.selectedPiece?.position === piece.position ? null : piece;
             
             return { ...game };
         })

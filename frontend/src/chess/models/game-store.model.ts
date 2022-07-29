@@ -7,5 +7,4 @@ export interface GameStore extends Partial<Game> {
     selectedPiece?: ChessPiece;
     availableMoves?: Position[];
     nextColorToPlay?: PieceColor;
-    checkStatus?: 'check' | 'checkmate' | null;
 }

@@ -18,18 +18,18 @@ export const movementDirection = {
 }
 
 export const defaultChessboardWithPieces: ChessPiece[] = [
-    new King(PieceColor.WHITE, 51),
-    new Queen(PieceColor.WHITE, 41),
-    new Rook(PieceColor.WHITE, 11, 'long'),
-    new Rook(PieceColor.WHITE, 81, 'short'),
-    new Bishop(PieceColor.WHITE, 31),
-    new Bishop(PieceColor.WHITE, 61),
-    new Knight(PieceColor.WHITE, 21),
-    new Knight(PieceColor.WHITE, 71),
-    new Pawn(PieceColor.WHITE, 52),
-    new Pawn(PieceColor.WHITE, 42),
-    new Pawn(PieceColor.WHITE, 12),
-    new Pawn(PieceColor.WHITE, 82),
+    new King(PieceColor.WHITE, 31),
+    // new Queen(PieceColor.WHITE, 41),
+    // new Rook(PieceColor.WHITE, 11, 'long'),
+    // new Rook(PieceColor.WHITE, 81, 'short'),
+    // new Bishop(PieceColor.WHITE, 31),
+    // new Bishop(PieceColor.WHITE, 61),
+    // new Knight(PieceColor.WHITE, 21),
+    // new Knight(PieceColor.WHITE, 71),
+    // new Pawn(PieceColor.WHITE, 52),
+    // new Pawn(PieceColor.WHITE, 42),
+    // new Pawn(PieceColor.WHITE, 12),
+    // new Pawn(PieceColor.WHITE, 82),
     new Pawn(PieceColor.WHITE, 32),
     new Pawn(PieceColor.WHITE, 62),
     new Pawn(PieceColor.WHITE, 22),
@@ -40,7 +40,7 @@ export const defaultChessboardWithPieces: ChessPiece[] = [
     new Rook(PieceColor.BLACK, 88, 'short'),
     new Bishop(PieceColor.BLACK, 38),
     new Bishop(PieceColor.BLACK, 68),
-    new Knight(PieceColor.BLACK, 28),
+    new Knight(PieceColor.BLACK, 55),
     new Knight(PieceColor.BLACK, 78),
     new Pawn(PieceColor.BLACK, 57),
     new Pawn(PieceColor.BLACK, 47),
@@ -59,7 +59,7 @@ export const defaultGame: GameStore = {
     board: defaultChessboardWithPieces,
     whitePlayerId: '',
     blackPlayerId: '',
-    nextColorToPlay: PieceColor.WHITE,
+    nextColorToPlay: PieceColor.BLACK,
 }
 
 export const castleValues = {

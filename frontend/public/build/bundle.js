@@ -2949,6 +2949,11 @@ var app = (function () {
         PieceType["PAWN"] = "pawn";
     })(PieceType || (PieceType = {}));
 
+    function sliceArray(array, index) {
+        return [...array.slice(0, index).concat(array.slice(index + 1))];
+    }
+    const range = (start, length, modifier) => Array.from({ length: length }, (_, i) => (start + (i * modifier)));
+
     function getOppositeColor(color) {
         return color === PieceColor.BLACK ? PieceColor.WHITE : PieceColor.BLACK;
     }
@@ -2958,7 +2963,7 @@ var app = (function () {
      * @returns true if the position is not a valid position
      */
     function isPositionOutsideBoundaries(position) {
-        return ["0", "9"].includes(position.toString()[1]);
+        return ["0", "9"].includes(position.toString()[1]) || position < 11 || position > 88;
     }
     function hasPieceOnPosition(pieces, destination, color) {
         return pieces.find((piece) => piece.position === destination && piece.color !== getOppositeColor(color));
@@ -2973,11 +2978,11 @@ var app = (function () {
          * @param numberOfAvailableColumnBySide The number of column till the end of the board for a side
          * @returns
          */
-    function getAvailableMovesBySide(pieces, movementValuesBySide, startingPosition, color) {
+    function getAvailableMovesBySide(pieces, movementValuesBySide, startingPosition, color, distance = 8) {
         const availableMoves = [];
         movementValuesBySide.forEach((move) => {
             let position = startingPosition;
-            [...Array(8).keys()].every(() => {
+            [...Array(distance).keys()].every(() => {
                 position = (position + move);
                 // If the position is out of boundaries or we encounter a piece of the same color
                 if (isPositionOutsideBoundaries(position)
@@ -2995,12 +3000,76 @@ var app = (function () {
         });
         return availableMoves;
     }
+    function getDiagonalBetweenTwoPiece(firstPiece, secondPiece) {
+        const rangeFromBishopPosition = [-9, 9, 11, -11].map((modifier) => range(secondPiece.position, 8, modifier).filter((value) => !isPositionOutsideBoundaries(value)));
+        const diagonal = rangeFromBishopPosition.filter((listePositionByDiagonal) => {
+            return listePositionByDiagonal.find((position) => position === firstPiece.position);
+        }).flat();
+        return diagonal.filter((position) => {
+            if (firstPiece.position < secondPiece.position) {
+                return position > firstPiece.position && position <= secondPiece.position;
+            }
+            return position < firstPiece.position && position >= secondPiece.position;
+        });
+    }
+    function getStraigthLineBetweenTwoPieces(firstPiece, secondPiece) {
+        let modifier = getLastDigitOfPosition(secondPiece.position) === getLastDigitOfPosition(firstPiece.position) ? 10 : 1;
+        return secondPiece.position < firstPiece.position
+            ? range(secondPiece.position, firstPiece.position - 1 - secondPiece.position, modifier)
+            : range(firstPiece.position, secondPiece.position - firstPiece.position - 1, modifier);
+    }
     function getLastDigitOfPosition(position) {
         return position === null || position === void 0 ? void 0 : position.toString()[1];
+    }
+    function getFirstDigitOfPosition(position) {
+        return position === null || position === void 0 ? void 0 : position.toString()[0];
+    }
+    function getPieceAttackingTheKing(king, board) {
+        const opponents = board.filter((piece) => piece.color === getOppositeColor(king.color));
+        return opponents.filter((piece) => !!piece.availableMoves.find((move) => move === king.position));
+    }
+    function filterAvailableMovesIfKingIsChecked(board, currentPiece, availableMoves) {
+        const [king] = board.filter((piece) => piece.type === PieceType.KING && piece.color === currentPiece.color);
+        const piecesAttackingTheKing = getPieceAttackingTheKing(king, board);
+        if (currentPiece.type === PieceType.KING) {
+            const kingIndex = board.findIndex((piece) => piece.type === PieceType.KING && piece.color === currentPiece.color);
+            const boardWithoutKing = board.slice(0, kingIndex).concat(board.slice(kingIndex + 1));
+            const piecesAttackingTheKingMoves = piecesAttackingTheKing.map((piece) => piece.getAvailablePositions(boardWithoutKing, [], false)).flat();
+            return availableMoves.filter((move) => !piecesAttackingTheKingMoves.find((position) => position === move));
+        }
+        if (piecesAttackingTheKing.length > 1) {
+            return [];
+        }
+        else if (piecesAttackingTheKing.length === 1) {
+            const [pieceAttackingTheKing] = piecesAttackingTheKing;
+            const onlyPossiblePosition = pieceAttackingTheKing.getPositionBetweenPieceAndOpponentKing(king, availableMoves);
+            return availableMoves.filter((move) => !!onlyPossiblePosition.find((position) => position === move));
+        }
+        return availableMoves;
+    }
+    function getBoardWithoutPiece(board, pieceToRemove) {
+        const pieceIndex = board.findIndex((piece) => piece.position === pieceToRemove.position);
+        return sliceArray([...board], pieceIndex);
+    }
+    /**
+     * Check if the king is under attack if a piece is not on the board to see if the piece is pinned
+     * @param board The current board of pieces
+     * @param pieceToCheck The piece to check if it's pinned
+     * @returns
+     */
+    function isCheckWithoutPieceOnBoard(board, pieceToCheck) {
+        const [king] = board.filter((piece) => piece.type === PieceType.KING && piece.color === pieceToCheck.color);
+        const boardWithoutPiece = getBoardWithoutPiece(board, pieceToCheck);
+        const pieceAttackingTheKing = getPieceAttackingTheKing(king, boardWithoutPiece.map((piece) => {
+            piece.availableMoves = piece.getAvailablePositions(boardWithoutPiece, [], false);
+            return piece;
+        }));
+        return pieceAttackingTheKing.length > 0;
     }
 
     class ChessPieceAbstract {
         constructor(color, position) {
+            this.availableMoves = [];
             this._color = color;
             this._position = position;
         }
@@ -3024,9 +3093,17 @@ var app = (function () {
             this.type = PieceType.BISHOP;
         }
         getAvailablePositions(pieces, moves, isMovedPiece) {
-            const availableMoves = [];
-            availableMoves.push(...getAvailableMovesBySide(pieces, [9, 11, -9, -11], this.position, this.color));
+            let availableMoves = getAvailableMovesBySide(pieces, [9, 11, -9, -11], this.position, this.color);
+            // We remove all the availableMoves that does not protect the king is it is checked
+            availableMoves = filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
+            if (isMovedPiece && isCheckWithoutPieceOnBoard(pieces, this)) {
+                // If the piece is locked in place, we only allow moves that protect the king
+                availableMoves = filterAvailableMovesIfKingIsChecked(getBoardWithoutPiece(pieces, this), this, availableMoves);
+            }
             return availableMoves;
+        }
+        getPositionBetweenPieceAndOpponentKing(king, availableMoves) {
+            return getDiagonalBetweenTwoPiece(king, this);
         }
     }
 
@@ -3043,18 +3120,16 @@ var app = (function () {
          * @returns A list of position
          */
         getAvailablePositions(pieces, moves, isMovedPiece = true) {
-            const possibleMoves = [-10, 10, -1, 1].map((modifier) => this.position + modifier);
             let availableMoves = [];
-            possibleMoves.forEach((move) => {
-                if (!hasPieceOnPosition(pieces, move, this.color) && !isPositionOutsideBoundaries(move)) {
-                    availableMoves.push(move);
-                }
-            });
+            availableMoves.push(...getAvailableMovesBySide(pieces, [-10, 10, -1, 1, 9, 11, -9, -11], this.position, this.color, 1));
             availableMoves.push(...this.getCastlingMoves(pieces, moves));
             if (isMovedPiece) {
                 availableMoves = this.removeImpossibleMoves(pieces, moves, availableMoves);
             }
-            return availableMoves;
+            return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
+        }
+        getPositionBetweenPieceAndOpponentKing(king, availableMoves) {
+            return [];
         }
         /**
          * The king cannot go onto a square that is attacked by an opponent piece so we remove those square.
@@ -3092,6 +3167,9 @@ var app = (function () {
         }
         getCastlingMoves(pieces, moves) {
             const availableMoves = [];
+            if (getPieceAttackingTheKing(this, pieces).length > 0) {
+                return [];
+            }
             if (!hasAlreadyMoved(this, moves)) {
                 const castlePosition = castleValues[this.color];
                 Object.keys(castlePosition).forEach((name) => {
@@ -3115,8 +3193,15 @@ var app = (function () {
         }
         getAvailablePositions(pieces, moves, isMovedPiece) {
             const possibleDestination = [12, -8, -12, 8, -19, 21, 19, -21].map((modifier) => this.position + modifier);
-            const availableMoves = possibleDestination.filter((destination) => !hasPieceOnPosition(pieces, destination, this.color) && !isPositionOutsideBoundaries(destination));
-            return availableMoves;
+            let availableMoves = possibleDestination.filter((destination) => !hasPieceOnPosition(pieces, destination, this.color) && !isPositionOutsideBoundaries(destination));
+            if (isMovedPiece && isCheckWithoutPieceOnBoard(pieces, this)) {
+                // If the piece is locked in place, we only allow moves that protect the king
+                availableMoves = filterAvailableMovesIfKingIsChecked(getBoardWithoutPiece(pieces, this), this, availableMoves);
+            }
+            return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
+        }
+        getPositionBetweenPieceAndOpponentKing(king, availableMoves) {
+            return [];
         }
     }
 
@@ -3127,7 +3212,7 @@ var app = (function () {
         }
         getAvailablePositions(pieces, moves, isMovedPiece) {
             const direction = movementDirection[this.color];
-            const availableMoves = [];
+            let availableMoves = [];
             const hasPieceInPossibleMovement = pieces.find((piece) => piece.position === this.position + direction);
             if (!hasPieceInPossibleMovement) {
                 availableMoves.push(this.position + direction);
@@ -3146,7 +3231,14 @@ var app = (function () {
             if (this.isEnPassantSituation(moves, this.position)) {
                 availableMoves.push(moves[moves.length - 1].end + direction);
             }
-            return availableMoves;
+            if (isMovedPiece && isCheckWithoutPieceOnBoard(pieces, this)) {
+                // If the piece is locked in place, we only allow moves that protect the king
+                availableMoves = filterAvailableMovesIfKingIsChecked(getBoardWithoutPiece(pieces, this), this, availableMoves);
+            }
+            return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
+        }
+        getPositionBetweenPieceAndOpponentKing(king, availableMoves) {
+            return [];
         }
         onMoveAction(gameStore) {
             const { moves } = gameStore;
@@ -3181,9 +3273,20 @@ var app = (function () {
             this.type = PieceType.QUEEN;
         }
         getAvailablePositions(pieces, moves, isMovedPiece) {
-            const availableMoves = [];
+            let availableMoves = [];
             availableMoves.push(...getAvailableMovesBySide(pieces, [-10, 10, -1, 1, 9, 11, -9, -11], this.position, this.color));
-            return availableMoves;
+            if (isMovedPiece && isCheckWithoutPieceOnBoard(pieces, this)) {
+                // If the piece is locked in place, we only allow moves that protect the king
+                availableMoves = filterAvailableMovesIfKingIsChecked(getBoardWithoutPiece(pieces, this), this, availableMoves);
+            }
+            return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
+        }
+        getPositionBetweenPieceAndOpponentKing(king, availableMoves) {
+            let isStraightLine = getLastDigitOfPosition(this.position) === getLastDigitOfPosition(king.position) || getFirstDigitOfPosition(this.position) === getFirstDigitOfPosition(king.position);
+            if (isStraightLine) {
+                return getStraigthLineBetweenTwoPieces(king, this);
+            }
+            return getDiagonalBetweenTwoPiece(king, this);
         }
     }
 
@@ -3194,9 +3297,16 @@ var app = (function () {
             this.name = name;
         }
         getAvailablePositions(pieces, moves, isMovedPiece) {
-            const availableMoves = [];
+            let availableMoves = [];
             availableMoves.push(...getAvailableMovesBySide(pieces, [-10, 10, -1, 1], this.position, this.color));
-            return availableMoves;
+            if (isMovedPiece && isCheckWithoutPieceOnBoard(pieces, this)) {
+                // If the piece is locked in place, we only allow moves that protect the king
+                availableMoves = filterAvailableMovesIfKingIsChecked(getBoardWithoutPiece(pieces, this), this, availableMoves);
+            }
+            return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
+        }
+        getPositionBetweenPieceAndOpponentKing(king, availableMoves) {
+            return getStraigthLineBetweenTwoPieces(king, this);
         }
     }
 
@@ -3207,18 +3317,18 @@ var app = (function () {
         [PieceColor.BLACK]: -1
     };
     const defaultChessboardWithPieces = [
-        new King(PieceColor.WHITE, 51),
-        new Queen(PieceColor.WHITE, 41),
-        new Rook(PieceColor.WHITE, 11, 'long'),
-        new Rook(PieceColor.WHITE, 81, 'short'),
-        new Bishop(PieceColor.WHITE, 31),
-        new Bishop(PieceColor.WHITE, 61),
-        new Knight(PieceColor.WHITE, 21),
-        new Knight(PieceColor.WHITE, 71),
-        new Pawn(PieceColor.WHITE, 52),
-        new Pawn(PieceColor.WHITE, 42),
-        new Pawn(PieceColor.WHITE, 12),
-        new Pawn(PieceColor.WHITE, 82),
+        new King(PieceColor.WHITE, 31),
+        // new Queen(PieceColor.WHITE, 41),
+        // new Rook(PieceColor.WHITE, 11, 'long'),
+        // new Rook(PieceColor.WHITE, 81, 'short'),
+        // new Bishop(PieceColor.WHITE, 31),
+        // new Bishop(PieceColor.WHITE, 61),
+        // new Knight(PieceColor.WHITE, 21),
+        // new Knight(PieceColor.WHITE, 71),
+        // new Pawn(PieceColor.WHITE, 52),
+        // new Pawn(PieceColor.WHITE, 42),
+        // new Pawn(PieceColor.WHITE, 12),
+        // new Pawn(PieceColor.WHITE, 82),
         new Pawn(PieceColor.WHITE, 32),
         new Pawn(PieceColor.WHITE, 62),
         new Pawn(PieceColor.WHITE, 22),
@@ -3229,7 +3339,7 @@ var app = (function () {
         new Rook(PieceColor.BLACK, 88, 'short'),
         new Bishop(PieceColor.BLACK, 38),
         new Bishop(PieceColor.BLACK, 68),
-        new Knight(PieceColor.BLACK, 28),
+        new Knight(PieceColor.BLACK, 55),
         new Knight(PieceColor.BLACK, 78),
         new Pawn(PieceColor.BLACK, 57),
         new Pawn(PieceColor.BLACK, 47),
@@ -3247,7 +3357,7 @@ var app = (function () {
         board: defaultChessboardWithPieces,
         whitePlayerId: '',
         blackPlayerId: '',
-        nextColorToPlay: PieceColor.WHITE,
+        nextColorToPlay: PieceColor.BLACK,
     };
     const castleValues = {
         [PieceColor.WHITE]: {
@@ -3284,7 +3394,8 @@ var app = (function () {
         },
         addMove: (move) => {
             gameStore.update((game) => {
-                if (game.availableMoves.find((availableMove) => availableMove === +move)) {
+                var _a;
+                if ((_a = game.availableMoves) === null || _a === void 0 ? void 0 : _a.find((availableMove) => availableMove === +move)) {
                     game.moves.push({
                         piece: game.selectedPiece,
                         start: game.selectedPiece.position,
@@ -3298,6 +3409,10 @@ var app = (function () {
                     game.board[game.board.findIndex((piece) => piece.position === game.selectedPiece.position)].position = +move;
                     // Allow the pieces to make action on the board (castling moving the rook or en passant for exemple)
                     game = game.selectedPiece.onMoveAction(game);
+                    game.board = game.board.map((value) => {
+                        value.availableMoves = value.getAvailablePositions(game.board, [], false);
+                        return value;
+                    });
                     // Reset the selectedPiece
                     game.selectedPiece = null;
                     game.availableMoves = [];
@@ -3309,8 +3424,9 @@ var app = (function () {
         },
         setSelectedPiece: (piece) => {
             gameStore.update((game) => {
-                game.availableMoves = game.selectedPiece ? [] : piece.getAvailablePositions(game.board, game.moves, true);
-                game.selectedPiece = game.selectedPiece ? null : piece;
+                var _a, _b;
+                game.availableMoves = ((_a = game.selectedPiece) === null || _a === void 0 ? void 0 : _a.position) === piece.position ? [] : piece.getAvailablePositions(game.board, game.moves, true);
+                game.selectedPiece = ((_b = game.selectedPiece) === null || _b === void 0 ? void 0 : _b.position) === piece.position ? null : piece;
                 return Object.assign({}, game);
             });
         }

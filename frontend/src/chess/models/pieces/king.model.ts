@@ -1,7 +1,7 @@
 import { castleValues } from "../../config";
 import { PieceColor } from "../../enums/piece-color.enum";
 import { PieceType } from "../../enums/piece-type.enum";
-import { getOppositeColor, hasAlreadyMoved, hasPieceOnPosition, isPositionOutsideBoundaries } from "../../utils/chessboard.utils";
+import { filterAvailableMovesIfKingIsChecked, getAvailableMovesBySide, getOppositeColor, getPieceAttackingTheKing, hasAlreadyMoved, hasPieceOnPosition, isPositionOutsideBoundaries } from "../../utils/chessboard.utils";
 import type { GameStore } from "../game-store.model";
 import type { Move } from "../move.model";
 import type { Position } from "../position.model";
@@ -20,13 +20,8 @@ export class King extends ChessPieceAbstract {
      * @returns A list of position
      */
     getAvailablePositions(pieces: ChessPiece[], moves: Move[], isMovedPiece: boolean = true): Position[] {
-        const possibleMoves = [-10, 10, -1, 1].map((modifier) => this.position + modifier as Position);
         let availableMoves = [];
-        possibleMoves.forEach((move) => {
-            if (!hasPieceOnPosition(pieces, move, this.color) && !isPositionOutsideBoundaries(move)) {
-                availableMoves.push(move);
-            }
-        });
+        availableMoves.push(...getAvailableMovesBySide(pieces, [-10, 10, -1, 1, 9, 11, -9, -11], this.position, this.color, 1));
 
         availableMoves.push(...this.getCastlingMoves(pieces, moves));
         
@@ -34,7 +29,11 @@ export class King extends ChessPieceAbstract {
             availableMoves = this.removeImpossibleMoves(pieces, moves, availableMoves);
         }
 
-        return availableMoves;
+        return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
+    }
+
+    getPositionBetweenPieceAndOpponentKing(king: ChessPiece, availableMoves: Position[]): Position[] {
+        return [];
     }
 
     /**
@@ -82,6 +81,9 @@ export class King extends ChessPieceAbstract {
 
     private getCastlingMoves(pieces: ChessPiece[], moves: Move[]) {
         const availableMoves = [];
+        if (getPieceAttackingTheKing(this, pieces).length > 0) {
+            return [];
+        }
         if (!hasAlreadyMoved(this, moves)) {
             const castlePosition = castleValues[this.color];
 

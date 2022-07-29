@@ -4,7 +4,7 @@ import type { ChessPiece } from "./chess-piece.model";
 import { ChessPieceAbstract } from "./chess-piece.model";
 import { movementDirection } from '../../config';
 import { PieceColor } from "../../enums/piece-color.enum";
-import { getLastDigitOfPosition, getOppositeColor } from "../../utils/chessboard.utils";
+import { getLastDigitOfPosition, getOppositeColor, filterAvailableMovesIfKingIsChecked, isCheckWithoutPieceOnBoard, getBoardWithoutPiece } from "../../utils/chessboard.utils";
 import type { Move } from "../move.model";
 import type { GameStore } from "../game-store.model";
 
@@ -13,7 +13,7 @@ export class Pawn extends ChessPieceAbstract {
 
     getAvailablePositions(pieces: ChessPiece[], moves: Move[], isMovedPiece: boolean): Position[] {
         const direction: number = movementDirection[this.color];
-        const availableMoves = [];
+        let availableMoves = [];
 
         const hasPieceInPossibleMovement = pieces.find((piece) => piece.position === this.position + direction as Position);
         if (!hasPieceInPossibleMovement) {
@@ -35,7 +35,16 @@ export class Pawn extends ChessPieceAbstract {
             availableMoves.push(moves[moves.length -1].end + direction);
         }
 
-        return availableMoves;
+        if (isMovedPiece && isCheckWithoutPieceOnBoard(pieces, this)) {
+            // If the piece is locked in place, we only allow moves that protect the king
+            availableMoves = filterAvailableMovesIfKingIsChecked(getBoardWithoutPiece(pieces, this), this, availableMoves);
+        }
+        
+        return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
+    }
+
+    getPositionBetweenPieceAndOpponentKing(king: ChessPiece, availableMoves: Position[]): Position[] {
+        return [];
     }
 
     onMoveAction(gameStore: GameStore): GameStore {

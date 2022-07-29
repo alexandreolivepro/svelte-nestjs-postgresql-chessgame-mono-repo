@@ -1,5 +1,11 @@
 import { PieceType } from "../../enums/piece-type.enum";
-import { getAvailableMovesBySide } from "../../utils/chessboard.utils";
+import {
+    getAvailableMovesBySide,
+    filterAvailableMovesIfKingIsChecked,
+    getStraigthLineBetweenTwoPieces,
+    isCheckWithoutPieceOnBoard,
+    getBoardWithoutPiece,
+} from "../../utils/chessboard.utils";
 import type { Move } from "../move.model";
 import type { PieceColor } from "../piece-color.model";
 import type { Position } from "../position.model";
@@ -19,10 +25,19 @@ export class Rook extends ChessPieceAbstract {
     }
 
     getAvailablePositions(pieces: ChessPiece[], moves: Move[], isMovedPiece: boolean): Position[] {
-        const availableMoves = [];
+        let availableMoves = [];
 
         availableMoves.push(...getAvailableMovesBySide(pieces, [-10, 10, -1, 1], this.position, this.color));
 
-        return availableMoves;
+        if (isMovedPiece && isCheckWithoutPieceOnBoard(pieces, this)) {
+            // If the piece is locked in place, we only allow moves that protect the king
+            availableMoves = filterAvailableMovesIfKingIsChecked(getBoardWithoutPiece(pieces, this), this, availableMoves);
+        }
+
+        return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
+    }
+
+    getPositionBetweenPieceAndOpponentKing(king: ChessPiece, availableMoves: Position[]): Position[] {
+        return getStraigthLineBetweenTwoPieces(king, this);
     }
 }

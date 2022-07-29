@@ -13,6 +13,8 @@ import type { Rook } from "./rook.model";
 export abstract class ChessPieceAbstract {
     type: PieceType;
 
+    availableMoves: Position[] = [];
+
     private _color?: PieceColor;
 
     private _position?: Position;
@@ -23,6 +25,8 @@ export abstract class ChessPieceAbstract {
     }
 
     abstract getAvailablePositions(pieces: ChessPiece[], moves: Move[], isMovedPiece: boolean): Position[];
+
+    abstract getPositionBetweenPieceAndOpponentKing(king: ChessPiece, availableMoves: Position[]): Position[];
 
     onMoveAction(gameStore: GameStore): GameStore {
         return gameStore;
