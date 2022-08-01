@@ -22,6 +22,6 @@ export class Knight extends ChessPieceAbstract {
     }
 
     getPositionBetweenPieceAndOpponentKing(king: ChessPiece, availableMoves: Position[]): Position[] {
-        return [];
+        return [this.position];
     }
 }

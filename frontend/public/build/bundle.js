@@ -2267,10 +2267,10 @@ var app = (function () {
     			div = element("div");
     			i = element("i");
     			attr_dev(i, "class", i_class_value = "" + (/*piece*/ ctx[0].color + "-" + /*piece*/ ctx[0].type + " svelte-5006eu"));
-    			add_location(i, file$1, 338, 4, 4925);
+    			add_location(i, file$1, 338, 4, 4932);
     			attr_dev(div, "class", div_class_value = "square-" + /*piece*/ ctx[0].position + "" + " svelte-5006eu");
     			toggle_class(div, "is-selected", /*isSelected*/ ctx[1]);
-    			add_location(div, file$1, 335, 0, 4843);
+    			add_location(div, file$1, 335, 0, 4847);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -2437,7 +2437,7 @@ var app = (function () {
     			attr_dev(div, "class", "column svelte-1p4nmfw");
     			attr_dev(div, "data-square", /*column*/ ctx[15].toString() + /*row*/ ctx[12].toString());
     			toggle_class(div, "is-available", !!/*availableMoves*/ ctx[2]?.find(func));
-    			add_location(div, file, 48, 16, 1026);
+    			add_location(div, file, 48, 16, 1034);
     			this.first = div;
     		},
     		m: function mount(target, anchor) {
@@ -2502,7 +2502,7 @@ var app = (function () {
     			}
 
     			attr_dev(div, "class", "row d-flex svelte-1p4nmfw");
-    			add_location(div, file, 46, 8, 938);
+    			add_location(div, file, 46, 8, 944);
     			this.first = div;
     		},
     		m: function mount(target, anchor) {
@@ -2567,7 +2567,7 @@ var app = (function () {
     			}
 
     			attr_dev(div, "class", "chess-pieces svelte-1p4nmfw");
-    			add_location(div, file, 60, 8, 1499);
+    			add_location(div, file, 60, 8, 1519);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -2731,7 +2731,7 @@ var app = (function () {
     			t = space();
     			if (if_block) if_block.c();
     			attr_dev(div, "class", "chessboard container svelte-1p4nmfw");
-    			add_location(div, file, 44, 0, 865);
+    			add_location(div, file, 44, 0, 869);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -3201,7 +3201,7 @@ var app = (function () {
             return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
         }
         getPositionBetweenPieceAndOpponentKing(king, availableMoves) {
-            return [];
+            return [this.position];
         }
     }
 
@@ -3231,14 +3231,11 @@ var app = (function () {
             if (this.isEnPassantSituation(moves, this.position)) {
                 availableMoves.push(moves[moves.length - 1].end + direction);
             }
-            if (isMovedPiece && isCheckWithoutPieceOnBoard(pieces, this)) {
-                // If the piece is locked in place, we only allow moves that protect the king
-                availableMoves = filterAvailableMovesIfKingIsChecked(getBoardWithoutPiece(pieces, this), this, availableMoves);
-            }
+            if (isMovedPiece && isCheckWithoutPieceOnBoard(pieces, this)) ;
             return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
         }
         getPositionBetweenPieceAndOpponentKing(king, availableMoves) {
-            return [];
+            return [this.position];
         }
         onMoveAction(gameStore) {
             const { moves } = gameStore;

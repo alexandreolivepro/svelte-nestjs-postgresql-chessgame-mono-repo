@@ -37,14 +37,14 @@ export class Pawn extends ChessPieceAbstract {
 
         if (isMovedPiece && isCheckWithoutPieceOnBoard(pieces, this)) {
             // If the piece is locked in place, we only allow moves that protect the king
-            availableMoves = filterAvailableMovesIfKingIsChecked(getBoardWithoutPiece(pieces, this), this, availableMoves);
+            //availableMoves = filterAvailableMovesIfKingIsChecked(getBoardWithoutPiece(pieces, this), this, availableMoves);
         }
         
         return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
     }
 
     getPositionBetweenPieceAndOpponentKing(king: ChessPiece, availableMoves: Position[]): Position[] {
-        return [];
+        return [this.position];
     }
 
     onMoveAction(gameStore: GameStore): GameStore {
