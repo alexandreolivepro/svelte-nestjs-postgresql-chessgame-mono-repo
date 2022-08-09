@@ -4,7 +4,7 @@ import type { GameStore } from "../game-store.model";
 import type { Move } from "../move.model";
 import type { Position } from "../position.model";
 import type { Bishop } from "./bishop.model";
-import type { King } from "./king.model";
+import type King from "./king.model";
 import type { Knight } from "./knight.model";
 import type { Pawn } from "./pawn.model";
 import type { Queen } from "./queen.model";

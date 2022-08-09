@@ -12,7 +12,7 @@ import type { Position } from "../position.model";
 import type { ChessPiece } from "./chess-piece.model";
 import { ChessPieceAbstract } from "./chess-piece.model";
 
-type RookName = 'short' | 'long';
+export type RookName = 'short' | 'long';
 
 export class Rook extends ChessPieceAbstract {
     readonly type = PieceType.ROOK;

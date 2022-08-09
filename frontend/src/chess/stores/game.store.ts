@@ -3,7 +3,7 @@ import type { PieceColor } from '../enums/piece-color.enum';
 import type { GameStore } from '../models/game-store.model';
 import type { ChessPiece } from '../models/pieces/chess-piece.model';
 import type { Position } from '../models/position.model';
-import { getOppositeColor } from '../utils/chessboard.utils';
+import { getCheckStatus, getOppositeColor } from '../utils/chessboard.utils';
 
 const gameStore: Writable<GameStore> = writable();
 
@@ -11,6 +11,10 @@ const customGameStore = {
     subscribe: gameStore.subscribe,
     setGame: (game) => {
         gameStore.set(game);
+        game.board = game.board.map((value) => {
+            value.availableMoves = value.getAvailablePositions(game.board, [], false);
+            return value;
+        });
     },
     addMove: (move: string) => {
         gameStore.update((game) => {
@@ -36,7 +40,8 @@ const customGameStore = {
                 game.selectedPiece = null;
                 game.availableMoves = [];
                 // Change the next player
-                game.nextColorToPlay = getOppositeColor(game.nextColorToPlay as PieceColor);
+                game.nextColorToPlay = getOppositeColor(game.nextColorToPlay);
+                game.checkStatus = getCheckStatus(game.board, game.nextColorToPlay);
             }
             return { ...game };
         });

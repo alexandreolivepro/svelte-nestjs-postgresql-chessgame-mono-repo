@@ -1,15 +1,15 @@
-import { castleValues } from "../../config";
-import { PieceColor } from "../../enums/piece-color.enum";
+import { sliceArray } from "../../../shared/utils";
 import { PieceType } from "../../enums/piece-type.enum";
-import { filterAvailableMovesIfKingIsChecked, getAvailableMovesBySide, getOppositeColor, getPieceAttackingTheKing, hasAlreadyMoved, hasPieceOnPosition, isPositionOutsideBoundaries } from "../../utils/chessboard.utils";
+import { getAvailableMovesBySide, getBoardWithNewInstance, getOppositeColor, getPieceAttackingTheKing, hasAlreadyMoved, pieceFactory } from "../../utils/chessboard.utils";
 import type { GameStore } from "../game-store.model";
 import type { Move } from "../move.model";
 import type { Position } from "../position.model";
 import type { ChessPiece } from "./chess-piece.model";
 import { ChessPieceAbstract } from "./chess-piece.model";
+import { castleValues } from "./config";
 import type { Rook } from "./rook.model";
 
-export class King extends ChessPieceAbstract {
+export default class King extends ChessPieceAbstract {
     readonly type = PieceType.KING;
 
     /**
@@ -26,10 +26,20 @@ export class King extends ChessPieceAbstract {
         availableMoves.push(...this.getCastlingMoves(pieces, moves));
         
         if (isMovedPiece) {
-            availableMoves = this.removeImpossibleMoves(pieces, moves, availableMoves);
+           availableMoves = this.removeImpossibleMoves(pieces, moves, availableMoves);
         }
+        
+        return this.filterKingMovesIfHeIsChecked(pieces, availableMoves);
+    }
 
-        return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
+    filterKingMovesIfHeIsChecked(board: ChessPiece[], availableMoves: Position[]) {
+        const piecesAttackingTheKing = getPieceAttackingTheKing(this, board);
+        const kingIndex = board.findIndex((piece) => piece.type === PieceType.KING && piece.color === this.color)
+        const boardWithoutKing = board.slice(0, kingIndex).concat(board.slice(kingIndex + 1));
+        const piecesAttackingTheKingMoves = piecesAttackingTheKing.map(
+            (piece) => piece.getAvailablePositions(boardWithoutKing, [], false)
+        ).flat();
+        return availableMoves.filter((move) => !piecesAttackingTheKingMoves.find((position) => position === move));
     }
 
     getPositionBetweenPieceAndOpponentKing(king: ChessPiece, availableMoves: Position[]): Position[] {
@@ -40,15 +50,43 @@ export class King extends ChessPieceAbstract {
      * The king cannot go onto a square that is attacked by an opponent piece so we remove those square.
      * It also removes the castle possibilities if needed.
      */
-    removeImpossibleMoves(pieces: ChessPiece[], moves: Move[], availableMoves: Position[]): Position[] {
-        const enemieAvailablePositions = pieces.filter((piece) => piece.color === getOppositeColor(this.color)).map(
-            (piece) => piece.getAvailablePositions(pieces, moves, false)
+    removeImpossibleMoves(board: ChessPiece[], moves: Move[], availableMoves: Position[]): Position[] {
+        const enemieAvailablePositions = board.filter((piece) => piece.color === getOppositeColor(this.color)).map(
+            (piece) => piece.availableMoves
         ).flat();
 
-        const newAvailableMoves = availableMoves.filter((position) => !enemieAvailablePositions.find((p) => p === position));
+        let newAvailableMoves = availableMoves.filter((position) => !enemieAvailablePositions.find((p) => p === position));
+
+        newAvailableMoves = this.removeAvailableMovesAttackingPiecesDefendedByOtherPieces(board, availableMoves);
+        
         return newAvailableMoves.filter((availableMove) => {
             return !(this.checkEmptySquareBetweenKingAndDestinationCastle(availableMove, 'long', newAvailableMoves)
                 || this.checkEmptySquareBetweenKingAndDestinationCastle(availableMove, 'short', newAvailableMoves));
+        });
+    }
+
+    /**
+     * The king can take opponent pieces only if they are not defended by other pieces, this function check if the king
+     * will be under attack if he takes the opponent piece.
+     * @param board the current board
+     * @param availableMoves the available moves for the king
+     * @returns the available moves
+     */
+    removeAvailableMovesAttackingPiecesDefendedByOtherPieces(board: ChessPiece[], availableMoves: Position[]): Position[] {
+        return availableMoves.filter((move) => {
+            let newBoard = getBoardWithNewInstance(board);
+            const hasPieceOnPossibleMove = newBoard.findIndex((piece) => piece.position === move);
+            if (hasPieceOnPossibleMove > -1) {
+                newBoard = sliceArray<ChessPiece>(newBoard, newBoard.findIndex((piece) => piece.position === move));
+            }
+            const kingIndex = newBoard.findIndex((piece) => piece.type === PieceType.KING && piece.color === this.color)
+            newBoard[kingIndex].position = move;
+            
+            newBoard = newBoard.map((piece) => {
+                piece.availableMoves = piece.getAvailablePositions(newBoard, [], false);
+                return piece;
+            });
+            return getPieceAttackingTheKing(newBoard[kingIndex], newBoard).length === 0;
         });
     }
 

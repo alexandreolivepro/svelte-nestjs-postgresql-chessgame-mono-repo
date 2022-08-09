@@ -41,3 +41,5 @@ import { onDestroy } from "svelte";
     on:pieceClick="{handlePieceClick}"
     on:movePiece="{handleMovePiece}"
 ></Chessboard>
+
+{currentGame.checkStatus}

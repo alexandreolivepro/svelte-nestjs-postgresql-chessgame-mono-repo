@@ -1,14 +1,17 @@
 import { range, sliceArray } from "../../shared/utils";
 import { PieceColor } from "../enums/piece-color.enum";
 import { PieceType } from "../enums/piece-type.enum";
+import { CheckStatus } from "../models/game-store.model";
 import type { Move } from "../models/move.model";
+import { Bishop } from "../models/pieces/bishop.model";
 import type { ChessPiece } from "../models/pieces/chess-piece.model";
+import King from "../models/pieces/king.model";
+import { Knight } from "../models/pieces/knight.model";
+import { Pawn } from "../models/pieces/pawn.model";
+import { Queen } from "../models/pieces/queen.model";
+import { Rook, type RookName } from "../models/pieces/rook.model";
 
-import type { BoardLetters, Position } from "../models/position.model";
-
-export function transformLetterToNumber(positionLetter: BoardLetters): number {
-    return 'abcdefgh'.search(positionLetter);
-}
+import type { Position } from "../models/position.model";
 
 export function getOppositeColor(color: PieceColor) {
     return color === PieceColor.BLACK ? PieceColor.WHITE : PieceColor.BLACK;
@@ -23,21 +26,23 @@ export function isPositionOutsideBoundaries(position: number): boolean {
     return ["0", "9"].includes(position.toString()[1]) || position < 11 || position > 88;
 }
 
-export function hasPieceOnPosition(pieces: ChessPiece[], destination: Position, color: PieceColor) {
-    return pieces.find((piece) => piece.position === destination && piece.color !== getOppositeColor(color));
+export function hasPieceOnPosition(pieces: ChessPiece[], destination: Position, color: PieceColor): boolean {
+    return pieces.some((piece) => piece.position === destination && piece.color !== getOppositeColor(color));
 }
 
 export function hasAlreadyMoved(piece: ChessPiece, moves: Move[]): boolean {
-    return !!moves.find((move) => move.piece.color === piece.color && move.piece.type === piece.type);
+    return moves.some((move) => move.piece.color === piece.color && move.piece.type === piece.type);
 }
 
 /**
-     * Calculate the available movement for the bishop for a given side (left or right) based on the bishop position
-     * @param pieces The list of pieces on the board
-     * @param movementValuesBySide The bishop moves in diagonal so we give the movement values for the diagonal by side
-     * @param numberOfAvailableColumnBySide The number of column till the end of the board for a side
-     * @returns 
-     */
+ * Calculate the available movement for a given side (left or right)
+ * @param pieces The list of pieces on the board
+ * @param movementValuesBySide The pieces move by a given value, for exemple going straight up is +1 or straight right is +10. This is an array of all the possible movement for a piece
+ * @param startingPosition The position of the piece 
+ * @param color the color of the piece
+ * @param distance the distance the piece can travel (default is 8 because it's the maximum any piece can travel)
+ * @returns 
+ */
 export function getAvailableMovesBySide(pieces: ChessPiece[], movementValuesBySide: number[], startingPosition: Position, color: PieceColor, distance: number = 8): Position[] {
     const availableMoves = [];
     movementValuesBySide.forEach((move) => {
@@ -49,9 +54,9 @@ export function getAvailableMovesBySide(pieces: ChessPiece[], movementValuesBySi
                 || hasPieceOnPosition(pieces, position, color)) {
                 return false;
             }
-            // As long as the bishop doesn't encounter his own piece we add position
+            // As long as the piece doesn't encounter his own piece we add position
             availableMoves.push(position);
-            // If the last added piece is an enemy piece, we break the loop because the bishop cannot go further
+            // If the last added piece is an enemy piece, we break the loop because the piece cannot go further
             if (pieces.find((piece) => piece.position === position && piece.color === getOppositeColor(color))) {
                 return false;
             }
@@ -76,10 +81,16 @@ export function getDiagonalBetweenTwoPiece(firstPiece: ChessPiece, secondPiece: 
 }
 
 export function getStraigthLineBetweenTwoPieces(firstPiece: ChessPiece, secondPiece: ChessPiece) {
-    let modifier = getLastDigitOfPosition(secondPiece.position) === getLastDigitOfPosition(firstPiece.position) ? 10 : 1;
-    return secondPiece.position < firstPiece.position
-        ? range(secondPiece.position,  firstPiece.position - 1 - secondPiece.position, modifier) as Position[]
-        : range(firstPiece.position, secondPiece.position - firstPiece.position -1, modifier) as Position[];
+    let highValue = secondPiece.position < firstPiece.position ? firstPiece.position : secondPiece.position;
+    let lowValue = secondPiece.position < firstPiece.position ? secondPiece.position : firstPiece.position;
+    let modifier = 1;
+    let length = highValue - lowValue;
+
+    if (getLastDigitOfPosition(secondPiece.position) === getLastDigitOfPosition(firstPiece.position)) {
+        modifier = 10;
+        length = +getFirstDigitOfPosition(highValue) - +getFirstDigitOfPosition(lowValue);
+    }
+    return (range(lowValue, length + 1, modifier) as Position[]).filter((value) => !isPositionOutsideBoundaries(value));
 }
 
 export function getLastDigitOfPosition(position: Position): string {
@@ -95,22 +106,12 @@ export function getPieceAttackingTheKing(king: ChessPiece, board: ChessPiece[]) 
         (piece) => piece.color === getOppositeColor(king.color),
     );
 
-    return opponents.filter((piece) => !!piece.availableMoves.find((move) => move === king.position));
+    return opponents.filter((piece) => piece.availableMoves.some((move) => move === king.position));
 }
 
 export function filterAvailableMovesIfKingIsChecked(board: ChessPiece[], currentPiece: ChessPiece, availableMoves: Position[]) {
     const [king] = board.filter((piece) => piece.type === PieceType.KING && piece.color === currentPiece.color);
-    
     const piecesAttackingTheKing = getPieceAttackingTheKing(king, board);
-
-    if (currentPiece.type === PieceType.KING) {
-        const kingIndex = board.findIndex((piece) => piece.type === PieceType.KING && piece.color === currentPiece.color)
-        const boardWithoutKing = board.slice(0, kingIndex).concat(board.slice(kingIndex + 1));
-        const piecesAttackingTheKingMoves = piecesAttackingTheKing.map(
-            (piece) => piece.getAvailablePositions(boardWithoutKing, [], false)
-        ).flat();
-        return availableMoves.filter((move) => !piecesAttackingTheKingMoves.find((position) => position === move));
-    }
 
     if (piecesAttackingTheKing.length > 1) {
         return [];
@@ -145,4 +146,52 @@ export function isCheckWithoutPieceOnBoard(board: ChessPiece[], pieceToCheck: Ch
         }),
     );
     return pieceAttackingTheKing.length > 0;
+}
+
+export function getCheckStatus(board: ChessPiece[], colorToPlay: PieceColor): CheckStatus | null {
+    const king = board.find((piece) => piece.type === PieceType.KING && piece.color === colorToPlay);
+    const pieceAttackingTheKing = getPieceAttackingTheKing(king, board);
+    const pieceCanPlay = board.filter((piece) => piece.color === colorToPlay && piece.availableMoves.length > 0 && piece.type !== PieceType.KING);
+    const allPieceMovement = pieceCanPlay.map((piece) => piece.availableMoves).concat(king.getAvailablePositions(board, [], true)).flat();
+    if (pieceAttackingTheKing.length > 0) {
+        return allPieceMovement.length === 0 ? CheckStatus.CHECKMATE : CheckStatus.CHECK;
+    } else if (pieceAttackingTheKing.length === 0 && allPieceMovement.length === 0) {
+        return CheckStatus.STALEMATE;
+    }
+    return null;
+}
+
+export function getBoardWithNewInstance(board: ChessPiece[]): ChessPiece[] {
+    return board.map((piece) => {
+        if (piece.type === PieceType.ROOK) {
+            return pieceFactory(piece.type, piece.position, piece.color, piece.name);
+        }
+        return pieceFactory(piece.type, piece.position, piece.color);
+    });
+}
+
+export function pieceFactory(type: PieceType, position: Position, color: PieceColor, name?: RookName): King | Queen | Bishop | Pawn | Rook | Knight  {
+    switch (type) {
+        case PieceType.BISHOP: {
+            return new Bishop(color, position);
+        }
+        case PieceType.QUEEN: {
+            return new Queen(color, position);
+        }
+        case PieceType.KING: {
+            return new King(color, position);
+        }
+        case PieceType.PAWN: {
+            return new Pawn(color, position);
+        }
+        case PieceType.ROOK: {
+            return new Rook(color, position, name);
+        }
+        case PieceType.KNIGHT: {
+            return new Knight(color, position);
+        }
+        default: {
+            throw new Error('Type should be a PieceType');
+        }
+    }
 }

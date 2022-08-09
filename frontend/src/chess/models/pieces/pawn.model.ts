@@ -2,11 +2,11 @@ import { PieceType } from "../../enums/piece-type.enum";
 import type { Position } from "../position.model";
 import type { ChessPiece } from "./chess-piece.model";
 import { ChessPieceAbstract } from "./chess-piece.model";
-import { movementDirection } from '../../config';
 import { PieceColor } from "../../enums/piece-color.enum";
 import { getLastDigitOfPosition, getOppositeColor, filterAvailableMovesIfKingIsChecked, isCheckWithoutPieceOnBoard, getBoardWithoutPiece } from "../../utils/chessboard.utils";
 import type { Move } from "../move.model";
 import type { GameStore } from "../game-store.model";
+import { movementDirection } from "./config";
 
 export class Pawn extends ChessPieceAbstract {
     readonly type = PieceType.PAWN;
