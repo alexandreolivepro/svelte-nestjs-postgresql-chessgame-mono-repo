@@ -1,5 +1,4 @@
 import { writable, type Writable } from 'svelte/store';
-import type { PieceColor } from '../enums/piece-color.enum';
 import type { GameStore } from '../models/game-store.model';
 import type { ChessPiece } from '../models/pieces/chess-piece.model';
 import type { Position } from '../models/position.model';
@@ -9,7 +8,7 @@ const gameStore: Writable<GameStore> = writable();
 
 const customGameStore = {
     subscribe: gameStore.subscribe,
-    setGame: (game) => {
+    setGame: (game: GameStore) => {
         gameStore.set(game);
         game.board = game.board.map((value) => {
             value.availableMoves = value.getAvailablePositions(game.board, [], false);
@@ -18,7 +17,7 @@ const customGameStore = {
     },
     addMove: (move: string) => {
         gameStore.update((game) => {
-            if (game.availableMoves?.find((availableMove) => availableMove === +move)) {
+            if (game.availableMoves?.find((availableMove) => availableMove === +move) && game.selectedPiece) {
                 game.moves.push({
                     piece: game.selectedPiece,
                     start: game.selectedPiece.position,
@@ -29,7 +28,7 @@ const customGameStore = {
                     game.board.splice(game.board.findIndex((piece) => piece.position === +move), 1);
                 }
                 // Move the selected piece at the destination
-                game.board[game.board.findIndex((piece) => piece.position === game.selectedPiece.position)].position = +move as Position;
+                game.board[game.board.findIndex((piece) => piece.position === game.selectedPiece?.position)].position = +move as Position;
                 // Allow the pieces to make action on the board (castling moving the rook or en passant for exemple)
                 game = game.selectedPiece.onMoveAction(game);
                 game.board = game.board.map((value) => {
@@ -37,7 +36,7 @@ const customGameStore = {
                     return value;
                 });
                 // Reset the selectedPiece
-                game.selectedPiece = null;
+                delete game.selectedPiece;
                 game.availableMoves = [];
                 // Change the next player
                 game.nextColorToPlay = getOppositeColor(game.nextColorToPlay);
@@ -49,7 +48,7 @@ const customGameStore = {
     setSelectedPiece: (piece: ChessPiece) => {
         gameStore.update((game) => {
             game.availableMoves = game.selectedPiece?.position === piece.position ? [] : piece.getAvailablePositions(game.board, game.moves, true);
-            game.selectedPiece = game.selectedPiece?.position === piece.position ? null : piece;
+            game.selectedPiece = game.selectedPiece?.position === piece.position ? undefined : piece;
             
             return { ...game };
         })

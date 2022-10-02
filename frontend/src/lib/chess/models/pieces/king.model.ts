@@ -20,7 +20,7 @@ export default class King extends ChessPieceAbstract {
      * @returns A list of position
      */
     getAvailablePositions(pieces: ChessPiece[], moves: Move[], isMovedPiece = true): Position[] {
-        let availableMoves = [];
+        let availableMoves: Position[] = [];
         availableMoves.push(...getAvailableMovesBySide(pieces, [-10, 10, -1, 1, 9, 11, -9, -11], this.position, this.color, 1));
 
         availableMoves.push(...this.getCastlingMoves(pieces, moves));
@@ -105,20 +105,21 @@ export default class King extends ChessPieceAbstract {
 
         // Moves the tower if it's a castle
         Object.keys(castlePosition).forEach((name) => {
+            const castle = castlePosition[name];
             const castleTowerAtStartingPosition = gameStore.board.findIndex(
-                (piece) => piece.color === this.color && piece.type === PieceType.ROOK && piece.position === castlePosition[name].towerDefaultPosition && piece.name === name,
+                (piece) => piece.color === this.color && piece.type === PieceType.ROOK && piece.position === castle.towerDefaultPosition && piece.name === name,
             );
             if (castleTowerAtStartingPosition > -1
                 && !this.hasRookAlreadyMoved(gameStore.board[castleTowerAtStartingPosition] as Rook, gameStore.moves)
-                && this.position === castlePosition[name].kingDestination) {
-                gameStore.board[castleTowerAtStartingPosition].position = castlePosition[name].towerDestination;
+                && this.position === castle.kingDestination) {
+                gameStore.board[castleTowerAtStartingPosition].position = castle.towerDestination as Position;
             }
         });
         return gameStore;
     }
 
     private getCastlingMoves(pieces: ChessPiece[], moves: Move[]) {
-        const availableMoves = [];
+        const availableMoves: Position[] = [];
         if (getPieceAttackingTheKing(this, pieces).length > 0) {
             return [];
         }
@@ -137,7 +138,7 @@ export default class King extends ChessPieceAbstract {
         return availableMoves;
     }
 
-    private hasRookAlreadyMoved(piece: Rook, moves: Move[]): Move {
+    private hasRookAlreadyMoved(piece: Rook, moves: Move[]): Move | undefined {
         return moves.find((move) => move.piece.color === piece?.color && move.piece.type === PieceType.ROOK && move.piece?.name === piece.name);
     }
 }

@@ -1,6 +1,7 @@
+import type { CastleConfig } from "../castle-config.model";
 import { PieceColor } from "../piece-color.model";
 
-export const castleValues = {
+export const castleValues: CastleConfig = {
     [PieceColor.WHITE]: {
         short: {
             kingDestination: 71,

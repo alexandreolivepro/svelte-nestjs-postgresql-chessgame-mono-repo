@@ -13,9 +13,9 @@
     const columns = [1, 2, 3, 4, 5, 6, 7, 8];
     const rows = columns.slice().reverse();
 
-    function clickEmptySquare(event): void {
-        if (selectedPiece) {
-            dispatch('movePiece', { square: event.target.dataset.square });
+    function clickEmptySquare(event: any): void {
+        if (selectedPiece && event.target instanceof HTMLDivElement) {
+            dispatch('movePiece', { square: event.target?.dataset.square });
         }
     }
 </script>

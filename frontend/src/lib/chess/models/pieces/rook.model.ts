@@ -25,7 +25,7 @@ export class Rook extends ChessPieceAbstract {
     }
 
     getAvailablePositions(pieces: ChessPiece[], moves: Move[], isMovedPiece: boolean): Position[] {
-        let availableMoves = [];
+        let availableMoves: Position[] = [];
 
         availableMoves.push(...getAvailableMovesBySide(pieces, [-10, 10, -1, 1], this.position, this.color));
 

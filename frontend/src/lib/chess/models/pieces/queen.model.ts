@@ -9,7 +9,7 @@ export class Queen extends ChessPieceAbstract {
     readonly type = PieceType.QUEEN;
     
     getAvailablePositions(pieces: ChessPiece[], moves: Move[], isMovedPiece: boolean): Position[] {
-        let availableMoves = [];
+        let availableMoves: Position[] = [];
 
         availableMoves.push(...getAvailableMovesBySide(pieces, [-10, 10, -1, 1, 9, 11, -9, -11], this.position, this.color));
 

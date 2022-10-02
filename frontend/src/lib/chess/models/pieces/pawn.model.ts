@@ -32,12 +32,7 @@ export class Pawn extends ChessPieceAbstract {
         }
 
         if (this.isEnPassantSituation(moves, this.position)) {
-            availableMoves.push(moves[moves.length -1].end + direction);
-        }
-
-        if (isMovedPiece && isCheckWithoutPieceOnBoard(pieces, this)) {
-            // If the piece is locked in place, we only allow moves that protect the king
-            //availableMoves = filterAvailableMovesIfKingIsChecked(getBoardWithoutPiece(pieces, this), this, availableMoves);
+            availableMoves.push(moves[moves.length -1].end + direction as Position);
         }
         
         return filterAvailableMovesIfKingIsChecked(pieces, this, availableMoves);
@@ -49,6 +44,9 @@ export class Pawn extends ChessPieceAbstract {
 
     onMoveAction(gameStore: GameStore): GameStore {
         const { moves } = gameStore;
+        if (!moves || moves.length === 0) {
+            return gameStore;
+        }
         const lastMove = moves[moves.length -1];
         // We check if the situation was en passant before the move to see if we need to remove the pawn
         if (lastMove.piece.type === this.type && lastMove.piece.color === this.color && this.isEnPassantSituation(moves.slice(0, moves.length - 1), lastMove.start)) {

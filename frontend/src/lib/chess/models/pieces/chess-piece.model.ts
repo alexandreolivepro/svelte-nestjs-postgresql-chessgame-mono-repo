@@ -11,13 +11,13 @@ import type { Queen } from "./queen.model";
 import type { Rook } from "./rook.model";
 
 export abstract class ChessPieceAbstract {
-    type: PieceType;
+    type!: PieceType;
 
     availableMoves: Position[] = [];
 
-    private _color?: PieceColor;
+    private _color!: PieceColor;
 
-    private _position?: Position;
+    private _position!: Position;
 
     constructor(color: PieceColor, position: Position) {
         this._color = color;

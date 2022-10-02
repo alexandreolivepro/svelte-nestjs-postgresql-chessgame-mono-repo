@@ -1,11 +1,11 @@
 <script type="ts">
 	import { post } from "$lib/api";
-import type { Form } from "$lib/models/form.model";
-import type { User } from "$lib/user/models/user.model";
+	import type { Form } from "$lib/models/form.model";
 
 	import { validateForm } from ".";
+	import type { CreateUserForm } from "./_models/create-user.model";
 
-	const form: Form<User> = {
+	const form: Form<CreateUserForm> = {
 		email: {},
 		password: {},
 		repeatPassword: {},
