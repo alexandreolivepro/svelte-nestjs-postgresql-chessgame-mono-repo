@@ -1,17 +1,17 @@
-import type { Game } from "./game.model";
-import type { PieceColor } from "./piece-color.model";
-import type { ChessPiece } from "./pieces/chess-piece.model";
-import type { Position } from "./position.model";
+import type { Game } from './game.model';
+import type { PieceColor } from './piece-color.model';
+import type { ChessPiece } from './pieces/chess-piece.model';
+import type { Position } from './position.model';
 
 export interface GameStore extends Game {
-    selectedPiece?: ChessPiece;
-    availableMoves?: Position[];
-    nextColorToPlay: PieceColor;
-    checkStatus: CheckStatus | null;
+	selectedPiece?: ChessPiece;
+	availableMoves?: Position[];
+	nextColorToPlay: PieceColor;
+	checkStatus: CheckStatus | null;
 }
 
 export enum CheckStatus {
-    CHECK = 'check',
-    CHECKMATE = 'checkmate',
-    STALEMATE = 'stalemate'
-} 
+	CHECK = 'check',
+	CHECKMATE = 'checkmate',
+	STALEMATE = 'stalemate'
+}

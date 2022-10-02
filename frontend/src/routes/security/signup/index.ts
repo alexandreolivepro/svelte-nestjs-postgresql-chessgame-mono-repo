@@ -1,12 +1,9 @@
-import type { Form } from "$lib/models/form.model";
-import type { CreateUserForm } from "./_models/create-user.model";
-
 export async function signUp(event: SubmitEvent) {
-    console.log(event);
+	console.log(event);
 
-    return {};
+	return {};
 }
 
-export function validateForm(form: Form<CreateUserForm>): boolean {
-    return false;
+export function validateForm(): boolean {
+	return false;
 }

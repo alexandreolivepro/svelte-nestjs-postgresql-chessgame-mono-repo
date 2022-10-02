@@ -1,4 +1,4 @@
 export enum PieceColor {
-    WHITE = 'white',
-    BLACK = 'black'
-};
+	WHITE = 'white',
+	BLACK = 'black'
+}

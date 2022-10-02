@@ -1,5 +1,4 @@
 <script lang="ts">
-
 </script>
 
 <svelte:head>
@@ -8,7 +7,5 @@
 </svelte:head>
 
 <section>
-	<h1>
-		Welcome to the game of chess ! 
-	</h1>
+	<h1>Welcome to the game of chess !</h1>
 </section>

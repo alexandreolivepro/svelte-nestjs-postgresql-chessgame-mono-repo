@@ -1,48 +1,55 @@
-import type { PieceColor } from "../../enums/piece-color.enum";
-import type { PieceType } from "../../enums/piece-type.enum";
-import type { GameStore } from "../game-store.model";
-import type { Move } from "../move.model";
-import type { Position } from "../position.model";
-import type { Bishop } from "./bishop.model";
-import type King from "./king.model";
-import type { Knight } from "./knight.model";
-import type { Pawn } from "./pawn.model";
-import type { Queen } from "./queen.model";
-import type { Rook } from "./rook.model";
+import type { PieceColor } from '../../enums/piece-color.enum';
+import type { PieceType } from '../../enums/piece-type.enum';
+import type { GameStore } from '../game-store.model';
+import type { Move } from '../move.model';
+import type { Position } from '../position.model';
+import type { Bishop } from './bishop.model';
+import type King from './king.model';
+import type { Knight } from './knight.model';
+import type { Pawn } from './pawn.model';
+import type { Queen } from './queen.model';
+import type { Rook } from './rook.model';
 
 export abstract class ChessPieceAbstract {
-    type!: PieceType;
+	type!: PieceType;
 
-    availableMoves: Position[] = [];
+	availableMoves: Position[] = [];
 
-    private _color!: PieceColor;
+	private _color!: PieceColor;
 
-    private _position!: Position;
+	private _position!: Position;
 
-    constructor(color: PieceColor, position: Position) {
-        this._color = color;
-        this._position = position;
-    }
+	constructor(color: PieceColor, position: Position) {
+		this._color = color;
+		this._position = position;
+	}
 
-    abstract getAvailablePositions(pieces: ChessPiece[], moves: Move[], isMovedPiece: boolean): Position[];
+	abstract getAvailablePositions(
+		pieces: ChessPiece[],
+		moves: Move[],
+		isMovedPiece: boolean
+	): Position[];
 
-    abstract getPositionBetweenPieceAndOpponentKing(king: ChessPiece, availableMoves: Position[]): Position[];
+	abstract getPositionBetweenPieceAndOpponentKing(
+		king: ChessPiece,
+		availableMoves: Position[]
+	): Position[];
 
-    onMoveAction(gameStore: GameStore): GameStore {
-        return gameStore;
-    }
+	onMoveAction(gameStore: GameStore): GameStore {
+		return gameStore;
+	}
 
-    set position(position: Position) {
-        this._position = position;
-    }
+	set position(position: Position) {
+		this._position = position;
+	}
 
-    get position(): Position {
-        return this._position;
-    }
+	get position(): Position {
+		return this._position;
+	}
 
-    get color(): PieceColor {
-        return this._color;
-    }
+	get color(): PieceColor {
+		return this._color;
+	}
 }
 
 export type ChessPiece = King | Knight | Queen | Bishop | Knight | Rook | Pawn;

@@ -1,6 +1,6 @@
-import type { User } from "$lib/user/models/user.model";
+import type { User } from '$lib/user/models/user.model';
 
 export interface CreateUserForm extends User {
-    password: string;
-    repeatPassword: string;
+	password: string;
+	repeatPassword: string;
 }
